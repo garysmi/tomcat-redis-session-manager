@@ -61,6 +61,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
   protected int timeout = Protocol.DEFAULT_TIMEOUT;
   protected String sentinelMaster = null;
   Set<String> sentinelSet = null;
+  protected boolean ssl = false;
 
   protected Pool<Jedis> connectionPool;
   protected JedisPoolConfig connectionPoolConfig = new JedisPoolConfig();
@@ -157,6 +158,14 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     return this.sessionPersistPoliciesSet.contains(SessionPersistPolicy.ALWAYS_SAVE_AFTER_REQUEST);
   }
 
+  public boolean getSsl() {
+	return this.ssl;
+  }
+
+  public void setSsl(boolean ssl) {
+    this.ssl = ssl;
+  }
+  
   public String getSentinels() {
     StringBuilder sentinels = new StringBuilder();
     for (Iterator<String> iter = this.sentinelSet.iterator(); iter.hasNext();) {
@@ -699,7 +708,11 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
         } else {
           throw new LifecycleException("Error configuring Redis Sentinel connection pool: expected both `sentinelMaster` and `sentiels` to be configured");
         }
+      } else if (getSsl() == true ) {
+    	log.info("SSL set to : " + getSsl());
+    	connectionPool = new JedisPool(this.connectionPoolConfig, getHost(), getPort(), getTimeout(), getSsl()); 
       } else {
+    	log.info("SSL set to : " + getSsl());
         connectionPool = new JedisPool(this.connectionPoolConfig, getHost(), getPort(), getTimeout(), getPassword());
       }
     } catch (Exception e) {
